@@ -1,88 +1,71 @@
-#! /usr/bin/python
 
-import sys
-import copy
-
-
-def solve_problem(m, types):
-    pizzas = [types[0]]
-    max_sum = types[0]
-
-    s = {}
-    for i in range(len(types)):
-        s[types[i]] = i
-
-    t = types
-    for i in range(len(t)):
-        p = [t[i]]
-        m_s = t[i]
-        for j in range(len(t)):
-            if i == j:
-                continue
-            if (m - m_s) in s.keys() and (m - m_s) not in p:
-                p += [m - m_s]
-                break
-            if (m_s + t[j]) < m:
-                p += [t[j]]
-                m_s += t[j]
-            else:
-                break
-
-        if m >= m_s > max_sum:
-            pizzas = p
-            max_sum = m_s
-        if max_sum == m:
-            break
-
-    pizzas = [s[n] for n in pizzas]
-    return pizzas
+def solution_1(clients):
+    # pizzas = clients[0][0]
+    ingredients = {}
+    for c in clients:
+        for l in c[0]:
+            ingredients[l] = ingredients[l] + 1 if l in ingredients else 1
+        for d in c[1]:
+            ingredients[d] = ingredients[d] - 1 if d in ingredients else -1
+    pizza = []
+    for k, v in ingredients.items():
+        if v > 0:
+            pizza.append(k)
+    return pizza
 
 
-def calc_score(pizzas, types):
+def calc_score(pizza, clients):
     score = 0
-    for p in pizzas:
-        score += types[p]
+    for c in clients:
+        l_n = 0
+        for l in c[0]:
+            if l in pizza:
+                l_n += 1
+        if l_n < len(c[0]):
+            continue
+        d_n = 0
+        for d in c[1]:
+            if d in pizza:
+                d_n += 1
+        if d_n == 0:
+            score += 1
     return score
 
 
 def read_input(file_name):
     with open(file_name, "r") as f:
-        (m, n) = [int(c) for c in f.readline().split()]
-        types = [int(c) for c in f.readline().split()]
-        return m, types
+        n = int(f.readline())
+        clients = []
+        for i in range(n):
+            likes = [s for s in f.readline().split()][1:]
+            dislikes = [s for s in f.readline().split()][1:]
+            clients.append((likes, dislikes))
+    return clients
 
 
-def write_output(file_out, pizzas):
+def write_output(file_out, pizza):
     with open(file_out, "w") as f:
-        f.write("%d\n" % len(pizzas))
-        if pizzas:
-            f.write(str(pizzas[0]))
-            for i in range(1, len(pizzas)):
-                f.write(" ")
-                f.write(str(pizzas[i]))
-            f.write("\n")
+        f.write("%d %s\n" % (len(pizza), " ".join(pizza)))
 
 
-def process_one_file(in_file, out_file):
-    (m, types) = read_input(in_file)
-    pizzas = solve_problem(m, types)
-    score = calc_score(pizzas, types)
-    if score > m:
-        raise RuntimeError("Score %d is bigger than max %d".format(score, m))
+def process_one_file(in_file, out_file, solution):
+    clients = read_input(in_file)
+    pizza = solution(clients)
+    score = calc_score(pizza, clients)
     print("%s Score: %d" % (in_file, score))
-    write_output(out_file, pizzas)
+    write_output(out_file, pizza)
     return score
 
 
 if __name__ == "__main__":
     total_score = 0
     files = [
-        ("a_example.in", "a_example.out"),
-        ("b_small.in", "b_small.out"),
-        ("c_medium.in", "c_medium.out"),
-        ("d_quite_big.in", "d_quite_big.out"),
-        ("e_also_big.in", "e_also_big.out")
+        ("a_an_example.in.txt", "a_an_example.out", solution_1),
+        ("b_basic.in.txt", "b_basic.out", solution_1),
+        ("c_coarse.in.txt", "c_coarse.out", solution_1),
+        ("d_difficult.in.txt", "d_difficult.out", solution_1),
+        ("e_elaborate.in.txt", "e_elaborate.out", solution_1)
     ]
-    for (f_in, f_out) in files:
-        total_score += process_one_file(f_in, f_out)
-    print "Total: %d" % total_score
+    for (f_in, f_out, f) in files:
+        total_score += process_one_file(f_in, f_out, f)
+    print(f"Total: {total_score}")
